@@ -1,0 +1,33 @@
+{
+  "name": "crud-post-operation",
+  "version": "1.0.0",
+  "description": "This is a simple CRUD operation of posts, where we learn about how a post should be created, liked, commented — just the fundamentals.",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start":"node backend/server.js",
+    "dev":"nodemon backend/server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shubhambhattacharya-dev/crud-post-operation.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/shubhambhattacharya-dev/crud-post-operation/issues"
+  },
+  "homepage": "https://github.com/shubhambhattacharya-dev/crud-post-operation#readme",
+  "dependencies": {
+    "cloudinary": "^2.7.0",
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0",
+    "mongoose": "^8.18.1",
+    "multer": "^2.0.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}

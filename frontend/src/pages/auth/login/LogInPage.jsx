@@ -36,6 +36,8 @@ const LoginPage = () => {
 			queryClient.setQueryData(["authUser"], data);
 
 			toast.success("Logged in successfully");
+			// Redirect to home page after login success
+			window.location.href = "/";
 		},
 		onError: (err) => {
 			toast.error(err.message);

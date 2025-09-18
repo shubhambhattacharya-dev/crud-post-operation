@@ -28,6 +28,8 @@ const Sidebar = () => {
 			// ✅ Clear the authUser cache immediately
 			queryClient.setQueryData(["authUser"], null);
 			toast.success("Logged out successfully");
+			// Redirect to login page after logout
+			window.location.href = "/login";
 		},
 		onError: (err) => {
 			toast.error(err.message);
@@ -66,9 +68,9 @@ const Sidebar = () => {
 				</ul>
 
 				{authUser && (
-					<Link
-						to={`/profile/${authUser.username}`}
-						className='mt-auto mb-10 flex gap-2 items-start transition-all duration-300 hover:bg-[#181818] py-2 px-4 rounded-full'
+					<div
+						className='mt-auto mb-10 flex gap-2 items-start transition-all duration-300 hover:bg-[#181818] py-2 px-4 rounded-full cursor-pointer'
+						onClick={() => logoutMutate()}
 					>
 						<div className='avatar hidden md:inline-flex'>
 							<div className='w-8 rounded-full'>
@@ -80,15 +82,9 @@ const Sidebar = () => {
 								<p className='text-white font-bold text-sm w-20 truncate'>{authUser?.fullName}</p>
 								<p className='text-slate-500 text-sm'>@{authUser?.username}</p>
 							</div>
-							<BiLogOut
-								className='w-5 h-5 cursor-pointer'
-								onClick={(e) => {
-									e.preventDefault();
-									logoutMutate();
-								}}
-							/>
+							<BiLogOut className='w-5 h-5' />
 						</div>
-					</Link>
+					</div>
 				)}
 			</div>
 		</div>

@@ -1,30 +1,36 @@
 
 import Post from "../models/post.model.js";
 import User from "../models/user.model.js";
-import { v2 as cloudinary } from "cloudinary";
+import cloudinary from "../lib/cloudinary.js";
+import fs from "fs";
 
 export const createPost = async (req, res) => {
 	try {
 		const { text } = req.body;
-		let { img } = req.body;
-		const userId = req.user._id.toString();
+		let imgUrl = "";
 
+		const userId = req.user._id.toString();
 		const user = await User.findById(userId);
 		if (!user) return res.status(404).json({ message: "User not found" });
 
-		if (!text && !img) {
+		if (!text && !req.file) {
 			return res.status(400).json({ error: "Post must have text or image" });
 		}
 
-		if (img) {
-			const uploadedResponse = await cloudinary.uploader.upload(img);
-			img = uploadedResponse.secure_url;
+		if (req.file && req.file.path) {
+			const uploadedResponse = await cloudinary.uploader.upload(req.file.path);
+			imgUrl = uploadedResponse.secure_url;
+
+			// Remove temp file
+			fs.unlink(req.file.path, (err) => {
+				if (err) console.error("Failed to remove temp file", err);
+			});
 		}
 
 		const newPost = new Post({
 			user: userId,
 			text,
-			img,
+			img: imgUrl,
 		});
 
 		await newPost.save();

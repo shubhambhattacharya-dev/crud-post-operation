@@ -3,6 +3,7 @@ import Post from "../models/post.model.js";
 import User from "../models/user.model.js";
 import cloudinary from "../lib/cloudinary.js";
 import fs from "fs";
+import path from "path";
 
 export const createPost = async (req, res) => {
 	try {
@@ -18,13 +19,29 @@ export const createPost = async (req, res) => {
 		}
 
 		if (req.file && req.file.path) {
-			const uploadedResponse = await cloudinary.uploader.upload(req.file.path);
-			imgUrl = uploadedResponse.secure_url;
+			if (fs.existsSync(req.file.path)) {
+				try {
+					console.log("Cloud name:", process.env.CLOUDINARY_CLOUD_NAME);
+					console.log("Uploading image to Cloudinary:", req.file.path);
+					const uploadedResponse = await cloudinary.uploader.upload(req.file.path);
+					console.log("Cloudinary upload successful:", uploadedResponse.secure_url);
+					imgUrl = uploadedResponse.secure_url;
+				} catch (cloudinaryError) {
+					console.error("Cloudinary upload failed:", cloudinaryError);
+					console.error("Please verify your Cloudinary credentials and network connectivity.");
+					// Since Cloudinary is not required, always fallback to local file URL
+					imgUrl = "/uploads/" + req.file.filename;
+				}
 
-			// Remove temp file
-			fs.unlink(req.file.path, (err) => {
-				if (err) console.error("Failed to remove temp file", err);
-			});
+				// Remove temp file only if uploaded to Cloudinary
+				if (imgUrl.startsWith("http")) {
+					fs.unlink(req.file.path, (err) => {
+						if (err) console.error("Failed to remove temp file", err);
+					});
+				}
+			} else {
+				return res.status(500).json({ error: "Uploaded file not found on server" });
+			}
 		}
 
 		const newPost = new Post({
@@ -53,8 +70,15 @@ export const deletePost = async (req, res) => {
 		}
 
 		if (post.img) {
-			const imgId = post.img.split("/").pop().split(".")[0];
-			await cloudinary.uploader.destroy(imgId);
+			if (post.img.startsWith("http")) {
+				const imgId = post.img.split("/").pop().split(".")[0];
+				await cloudinary.uploader.destroy(imgId);
+			} else if (post.img.startsWith("/uploads/")) {
+				const filePath = path.join(process.cwd(), "uploads", post.img.replace("/uploads/", ""));
+				fs.unlink(filePath, (err) => {
+					if (err) console.error("Failed to remove local image file", err);
+				});
+			}
 		}
 
 		await Post.findByIdAndDelete(req.params.id);

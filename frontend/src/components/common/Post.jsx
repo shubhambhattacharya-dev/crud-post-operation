@@ -2,24 +2,17 @@ import { FaRegComment, FaRegHeart, FaRegBookmark, FaTrash, FaHeart } from "react
 import { BiRepost } from "react-icons/bi";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import LoadingSpinner from "./LoadingSpinner";
+import useAuthUser from "../../hooks/useAuthUser";
 
 const Post = ({ post }) => {
   const [comment, setComment] = useState("");
   const queryClient = useQueryClient();
 
   // Fetch logged in user
-  const { data: authUser, isLoading: isAuthLoading } = useQuery({
-    queryKey: ["authUser"],
-    queryFn: async () => {
-      const res = await fetch("/api/auth/me", { credentials: "include" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to fetch user");
-      return data;
-    },
-  });
+  const { data: authUser, isLoading: isAuthLoading } = useAuthUser();
 
   const postOwner = post.user;
   const isLiked = authUser && post.likes ? post.likes.includes(authUser._id) : false;
@@ -135,7 +128,17 @@ const Post = ({ post }) => {
 
         <div className="flex flex-col gap-3 overflow-hidden">
           <span>{post.text}</span>
-          {post.img && <img src={post.img} className="h-80 object-contain rounded-lg border border-gray-700" alt="Post" />}
+          {post.img && (
+            <img
+              src={post.img.startsWith("/uploads/") ? `http://localhost:5000${post.img}?t=${new Date(post.updatedAt).getTime()}` : post.img + "?t=" + new Date(post.updatedAt).getTime()}
+              className="h-80 object-contain rounded-lg border border-gray-700"
+              alt="Post"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = "/avatar-placeholder.png";
+              }}
+            />
+          )}
         </div>
 
         <div className="flex justify-between mt-3">

@@ -5,8 +5,9 @@ import { IoNotifications } from "react-icons/io5";
 import { FaUser } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { BiLogOut } from "react-icons/bi";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"; // ✅ added useQuery
+import { useMutation, useQueryClient } from "@tanstack/react-query"; // ✅ added useQuery
 import { toast } from "react-hot-toast";
+import useAuthUser from "../../hooks/useAuthUser";
 
 const Sidebar = () => {
 	// ✅ access queryClient
@@ -37,17 +38,7 @@ const Sidebar = () => {
 	});
 
 	// ✅ FIXED useQuery
-	const { data: authUser } = useQuery({
-		queryKey: ["authUser"],
-		queryFn: async () => {
-			const res = await fetch("/api/auth/me", { credentials: "include" });
-			const data = await res.json();
-			if (!res.ok) {
-				throw new Error(data.error || "Failed to fetch user");
-			}
-			return data;
-		},
-	});
+	const { data: authUser } = useAuthUser();
 
 	return (
 		<div className='md:flex-[2_2_0] w-18 max-w-52'>

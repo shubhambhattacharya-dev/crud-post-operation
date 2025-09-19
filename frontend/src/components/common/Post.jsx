@@ -1,4 +1,4 @@
-import { FaRegComment, FaRegHeart, FaRegBookmark, FaTrash, FaHeart } from "react-icons/fa";
+import { FaRegComment, FaRegHeart, FaRegBookmark, FaTrash, FaHeart, FaBookmark } from "react-icons/fa";
 import { BiRepost } from "react-icons/bi";
 import { useState } from "react";
 import { Link } from "react-router-dom";
@@ -11,12 +11,12 @@ const Post = ({ post }) => {
   const [comment, setComment] = useState("");
   const queryClient = useQueryClient();
 
-  // Fetch logged in user
   const { data: authUser, isLoading: isAuthLoading } = useAuthUser();
 
   const postOwner = post.user;
   const isLiked = authUser && post.likes ? post.likes.includes(authUser._id) : false;
   const isMyPost = authUser && authUser._id === post.user._id;
+  const isReposted = authUser && post.reposts ? post.reposts.includes(authUser._id) : false;
 
   const formatPostDate = (dateString) => {
     const date = new Date(dateString);
@@ -30,7 +30,6 @@ const Post = ({ post }) => {
 
   const formattedDate = formatPostDate(post.createdAt);
 
-  // Delete post mutation
   const { mutate: deletePost, isLoading: isDeleting } = useMutation({
     mutationFn: async () => {
       const res = await fetch(`/api/posts/${post._id}`, {
@@ -50,7 +49,6 @@ const Post = ({ post }) => {
     },
   });
 
-  // Like / unlike post mutation
   const { mutate: likePost, isLoading: isLiking } = useMutation({
     mutationFn: async () => {
       const res = await fetch(`/api/posts/like/${post._id}`, {
@@ -62,7 +60,6 @@ const Post = ({ post }) => {
       return data;
     },
     onSuccess: () => {
-      // 🔄 Refresh page automatically after like/unlike
       window.location.reload();
     },
     onError: (error) => {
@@ -70,7 +67,56 @@ const Post = ({ post }) => {
     },
   });
 
-  // Comment post mutation
+  const { mutate: repostPost, isLoading: isReposting } = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/posts/repost/${post._id}`, {
+        method: "POST",
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to repost");
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Repost status updated");
+      queryClient.invalidateQueries(["posts"]);
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const { mutate: bookmarkPost, isLoading: isBookmarking } = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/posts/bookmark/${post._id}`, {
+        method: "POST",
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to bookmark post");
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Bookmark status updated");
+      queryClient.invalidateQueries(["posts"]);
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const isBookmarked = authUser && post && post.user && authUser.bookmarks ? authUser.bookmarks.includes(post._id) : false;
+
+  const handleBookmarkPost = () => {
+    if (!isBookmarking) {
+      bookmarkPost();
+    }
+  };
+
+  const handleDeletePost = () => deletePost();
+  const handleLikePost = () => isLiking || likePost();
+  const handleRepostPost = () => isReposting || repostPost();
+
   const { mutate: commentPost, isLoading: isCommenting } = useMutation({
     mutationFn: async () => {
       const res = await fetch(`/api/posts/comment/${post._id}`, {
@@ -94,8 +140,6 @@ const Post = ({ post }) => {
     },
   });
 
-  const handleDeletePost = () => deletePost();
-  const handleLikePost = () => isLiking || likePost();
   const handlePostComment = (e) => {
     e.preventDefault();
     if (!comment.trim() || isCommenting) return;
@@ -143,13 +187,12 @@ const Post = ({ post }) => {
 
         <div className="flex justify-between mt-3">
           <div className="flex gap-4 items-center w-2/3 justify-between">
-            {/* Comments */}
+          
             <div className="flex gap-1 items-center cursor-pointer group" onClick={() => document.getElementById(`comments_modal${post._id}`).showModal()}>
               <FaRegComment className="w-4 h-4 text-slate-500 group-hover:text-sky-400" />
               <span className="text-sm text-slate-500 group-hover:text-sky-400">{post.comments.length}</span>
             </div>
 
-            {/* Comments Modal */}
             <dialog id={`comments_modal${post._id}`} className="modal border-none outline-none">
               <div className="modal-box rounded border border-gray-600 bg-base-100">
                 <h3 className="font-bold text-lg mb-4">COMMENTS</h3>
@@ -178,13 +221,11 @@ const Post = ({ post }) => {
               <form method="dialog" className="modal-backdrop"><button className="outline-none">close</button></form>
             </dialog>
 
-            {/* Repost */}
-            <div className="flex gap-1 items-center group cursor-pointer">
-              <BiRepost className="w-6 h-6 text-slate-500 group-hover:text-green-500" />
-              <span className="text-sm text-slate-500 group-hover:text-green-500">0</span>
+            <div className={`flex gap-1 items-center group cursor-pointer ${isReposted ? "text-green-500" : "text-slate-500"}`} onClick={handleRepostPost}>
+              <BiRepost className="w-6 h-6" />
+              <span className="text-sm">{post.reposts.length}</span>
             </div>
 
-            {/* Likes */}
             <div className={`flex gap-1 items-center group cursor-pointer ${isLiked ? "text-pink-500" : "text-slate-500"}`} onClick={handleLikePost}>
               {isLiking ? <LoadingSpinner size="sm" /> : (isLiked ? <FaHeart className="w-4 h-4 text-pink-500" /> : <FaRegHeart className="w-4 h-4 group-hover:text-pink-500" />)}
               <span className="text-sm">{post.likes.length}</span>
@@ -192,8 +233,11 @@ const Post = ({ post }) => {
           </div>
 
           <div className="flex w-1/3 justify-end gap-2 items-center">
-            <FaRegBookmark className="w-4 h-4 text-slate-500 cursor-pointer hover:text-yellow-500" />
+            <div className={`flex gap-1 items-center group cursor-pointer ${isBookmarked ? "text-yellow-500" : "text-slate-500"}`} onClick={handleBookmarkPost}>
+              {isBookmarking ? <LoadingSpinner size="sm" /> : (isBookmarked ? <FaBookmark className="w-4 h-4 text-yellow-500" /> : <FaRegBookmark className="w-4 h-4 group-hover:text-yellow-500" />)}
+            </div>
           </div>
+
         </div>
       </div>
     </div>

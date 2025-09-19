@@ -63,7 +63,7 @@ const CreatePost = () => {
 		if (file) {
 			file.preview = URL.createObjectURL(file);
 			setImg(file);
-			// Reset the input value to allow re-uploading the same file
+
 			e.target.value = null;
 		}
 	};

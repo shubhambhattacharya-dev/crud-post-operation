@@ -23,6 +23,16 @@ const userSchema=mongoose.Schema({
         required:true,
         unique:true
     },
+    likedPosts: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "post",
+        default: []
+    }],
+    bookmarks: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "post",
+        default: []
+    }],
 
 },{timestamps:true});
 

@@ -16,6 +16,10 @@ const postSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "user"
   }],
+  reposts: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "user"
+  }],
   comments: [{
     text: {
       type: String,

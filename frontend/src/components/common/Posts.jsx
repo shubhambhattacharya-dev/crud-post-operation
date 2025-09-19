@@ -28,7 +28,7 @@ const Posts = ({ feedType }) => {
 	});
 
 	useEffect(() => {
-		refetch(); // refetch on feedType change
+		refetch(); 
 	}, [feedType, refetch]);
 
 	return (

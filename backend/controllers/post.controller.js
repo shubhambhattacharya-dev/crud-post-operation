@@ -233,6 +233,92 @@ export const getFollowingPosts = async (req, res) => {
 	}
 };
 
+export const repostUnrepostPost = async (req, res) => {
+	try {
+		const userId = req.user._id;
+		const { id: postId } = req.params;
+
+		const post = await Post.findById(postId);
+
+		if (!post) {
+			return res.status(404).json({ error: "Post not found" });
+		}
+
+		const userRepostedPost = post.reposts.includes(userId);
+
+		if (userRepostedPost) {
+			// Unrepost post
+			await Post.updateOne({ _id: postId }, { $pull: { reposts: userId } });
+
+			const updatedReposts = post.reposts.filter((id) => id.toString() !== userId.toString());
+			res.status(200).json(updatedReposts);
+		} else {
+			// Repost post
+			post.reposts.push(userId);
+			await post.save();
+
+			const updatedReposts = post.reposts;
+			res.status(200).json(updatedReposts);
+		}
+	} catch (error) {
+		console.log("Error in repostUnrepostPost controller: ", error);
+		res.status(500).json({ error: "Internal server error" });
+	}
+};
+
+export const bookmarkUnbookmarkPost = async (req, res) => {
+	try {
+		const userId = req.user._id;
+		const { id: postId } = req.params;
+
+		const post = await Post.findById(postId);
+
+		if (!post) {
+			return res.status(404).json({ error: "Post not found" });
+		}
+
+		const user = await User.findById(userId);
+		const isBookmarked = user.bookmarks.includes(postId);
+
+		if (isBookmarked) {
+			// Unbookmark post
+			await User.updateOne({ _id: userId }, { $pull: { bookmarks: postId } });
+			res.status(200).json({ message: "Post unbookmarked successfully" });
+		} else {
+			// Bookmark post
+			await User.updateOne({ _id: userId }, { $push: { bookmarks: postId } });
+			res.status(200).json({ message: "Post bookmarked successfully" });
+		}
+	} catch (error) {
+		console.log("Error in bookmarkUnbookmarkPost controller: ", error);
+		res.status(500).json({ error: "Internal server error" });
+	}
+};
+
+export const getBookmarkedPosts = async (req, res) => {
+	const userId = req.params.id;
+
+	try {
+		const user = await User.findById(userId);
+		if (!user) return res.status(404).json({ error: "User not found" });
+
+		const bookmarkedPosts = await Post.find({ _id: { $in: user.bookmarks } })
+			.populate({
+				path: "user",
+				select: "-password",
+			})
+			.populate({
+				path: "comments.user",
+				select: "-password",
+			});
+
+		res.status(200).json(bookmarkedPosts);
+	} catch (error) {
+		console.log("Error in getBookmarkedPosts controller: ", error);
+		res.status(500).json({ error: "Internal server error" });
+	}
+};
+
 export const getUserPosts = async (req, res) => {
 	try {
 		const { username } = req.params;

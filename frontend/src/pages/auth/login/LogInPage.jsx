@@ -14,7 +14,7 @@ const LoginPage = () => {
 		password: "",
 	});
 
-	// ✅ access queryClient
+
 	const queryClient = useQueryClient();
 
 	const { mutate: loginMutate, isError, isPending, error } = useMutation({
@@ -29,14 +29,14 @@ const LoginPage = () => {
 			if (!res.ok) {
 				throw new Error(data.error || "Something went wrong");
 			}
-			return data; // return user data
+			return data; 
 		},
 		onSuccess: (data) => {
-			// ✅ Update the cache immediately
+			
 			queryClient.setQueryData(["authUser"], data);
 
 			toast.success("Logged in successfully");
-			// Redirect to home page after login success
+			
 			window.location.href = "/";
 		},
 		onError: (err) => {

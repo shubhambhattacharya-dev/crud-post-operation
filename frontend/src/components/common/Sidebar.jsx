@@ -1,23 +1,22 @@
 import XSvg from "../svgs/x.jsx";
 
 import { MdHomeFilled } from "react-icons/md";
-import { IoNotifications } from "react-icons/io5";
-import { FaUser } from "react-icons/fa";
+
 import { Link } from "react-router-dom";
 import { BiLogOut } from "react-icons/bi";
-import { useMutation, useQueryClient } from "@tanstack/react-query"; // ✅ added useQuery
+import { useMutation, useQueryClient } from "@tanstack/react-query"; 
 import { toast } from "react-hot-toast";
 import useAuthUser from "../../hooks/useAuthUser";
 
 const Sidebar = () => {
-	// ✅ access queryClient
+	
 	const queryClient = useQueryClient();
 
 	const { mutate: logoutMutate, isPending, isError, error } = useMutation({
 		mutationFn: async () => {
 			const res = await fetch("/api/auth/logout", {
 				method: "POST",
-				credentials: "include", // ✅ include credentials so cookie clears
+				credentials: "include", 
 			});
 			const data = await res.json();
 			if (!res.ok) {
@@ -26,10 +25,10 @@ const Sidebar = () => {
 			return data;
 		},
 		onSuccess: () => {
-			// ✅ Clear the authUser cache immediately
+			
 			queryClient.setQueryData(["authUser"], null);
 			toast.success("Logged out successfully");
-			// Redirect to login page after logout
+			
 			window.location.href = "/login";
 		},
 		onError: (err) => {
@@ -37,7 +36,7 @@ const Sidebar = () => {
 		},
 	});
 
-	// ✅ FIXED useQuery
+	
 	const { data: authUser } = useAuthUser();
 
 	return (
